@@ -24,6 +24,7 @@ from flask_app import app
 def main():
     dsa = AesysDSA(CONFIG_DSA_PORT)
     app.config['dsa'] = dsa
+    app.config['text'] = ""
     app.run(host="0.0.0.0")
 
 

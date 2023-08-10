@@ -30,5 +30,10 @@ def post_text():
     data = request.get_json()
     if 'text' not in data:
         return {'error': "No text provided"}
-    app.config['dsa'].send_text(str(data['text']))
+    app.config['text'] = str(data['text'])
+    app.config['dsa'].send_text(app.config['text'])
     return {'error': None}
+
+@app.route("/api/text.json", methods=["GET"])
+def get_text():
+    return {'error': None, 'text': app.config['text']}
