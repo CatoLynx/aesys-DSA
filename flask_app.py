@@ -15,15 +15,17 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from flask import Flask, request
+from flask import Flask, request, render_template
 
 
 app = Flask(__name__)
 
-
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 def root():
-    return "aesys DSA API"
+    if request.method == "POST":
+        app.config['text'] = str(request.form['text'])
+        app.config['dsa'].send_text(app.config['text'])
+    return render_template("text.html", text=app.config['text'])
 
 @app.route("/api/text.json", methods=["POST"])
 def post_text():
