@@ -18,8 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from flask import Flask, request, render_template
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import check_password_hash
-
-from pyfis.aesys import AesysDSA
+from text_handler import TextHandler
 
 from _config import *
 from local_secrets import USERS
@@ -27,8 +26,7 @@ from local_secrets import USERS
 
 app = Flask(__name__)
 auth = HTTPBasicAuth()
-dsa = AesysDSA(CONFIG_DSA_PORT)
-text = ""
+handler = TextHandler(CONFIG_TEXTS_FILE)
 
 
 @auth.verify_password
@@ -41,24 +39,71 @@ def verify_password(username, password):
 @app.route("/", methods=["GET", "POST"])
 @auth.login_required
 def root():
-    global dsa, text
     if request.method == "POST":
-        text = str(request.form['text'])
-        dsa.send_text(text)
+        text_data = {
+            "text": str(request.form['text']),
+            "duration": 0,
+            "time_format": True
+        }
+        handler.set_text(0, text_data)
+    text_data = handler.get_text(0)
+    if text_data is None:
+        text = ""
+    else:
+        text = text_data['text']
     return render_template("text.html", text=text)
+
 
 @app.route("/api/text.json", methods=["POST"])
 @auth.login_required
 def post_text():
-    global dsa, text
     data = request.get_json()
     if 'text' not in data:
         return {'error': "No text provided"}
-    text = str(data['text'])
-    dsa.send_text(text)
+    
+    try:
+        level = int(data['level'])
+    except:
+        level = 0
+    
+    try:
+        text = str(data['text'])
+    except:
+        return {'error': "Invalid text"}
+    
+    try:
+        duration = int(data['duration'])
+    except:
+        duration = 0
+    
+    try:
+        time_format = bool(data['time_format'])
+    except:
+        time_format = False
+    
+    if text:
+        text_data = {
+            "text": text,
+            "duration": duration,
+            "time_format": time_format
+        }
+        handler.set_text(level, text_data)
+    else:
+        handler.delete_text(level)
+    
     return {'error': None}
 
 @app.route("/api/text.json", methods=["GET"])
+@auth.login_required
 def get_text():
-    global text
-    return {'error': None, 'text': text}
+    try:
+        level = int(request.args.get('level'))
+    except:
+        level = 0
+    text_data = handler.get_text(level)
+    if text_data is None:
+        return {'error': None, 'text': ""}
+    else:
+        response = {'error': None}
+        response.update(text_data)
+        return response
