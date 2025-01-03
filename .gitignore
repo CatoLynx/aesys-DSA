@@ -5,3 +5,4 @@ dist/
 __pycache__/
 .venv/
 _config.py
+local_secrets.py
