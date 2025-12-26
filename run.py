@@ -16,6 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import time
+import traceback
 
 from dsa import DSA
 from text_handler import TextHandler
@@ -42,7 +43,10 @@ def main():
                 text = text_data['text']
             
             if text != prev_text:
-                dsa.set_text(text)
+                try:
+                    dsa.set_text(text)
+                except:
+                    traceback.print_exc()
                 print("Updating text:", text)
                 prev_text = text
             
